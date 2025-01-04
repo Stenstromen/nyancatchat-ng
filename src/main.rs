@@ -1,4 +1,5 @@
 mod relay;
+mod routes;
 mod state;
 
 use state::{MessageStore, UserStore};
@@ -15,7 +16,21 @@ use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing::subscriber::set_global_default(FmtSubscriber::default())?;
+    // Get log level from environment variable, defaulting to INFO
+    let log_level = std::env::var("RUST_LOG")
+        .unwrap_or_else(|_| "info".to_string())
+        .parse::<tracing::Level>()
+        .unwrap_or(tracing::Level::INFO);
+
+    tracing::subscriber::set_global_default(
+        FmtSubscriber::builder()
+            .with_max_level(log_level)
+            .with_target(true)
+            .with_thread_ids(true)
+            .with_file(true)
+            .with_line_number(true)
+            .finish(),
+    )?;
 
     let messages = MessageStore::default();
     let users = UserStore::default();
@@ -30,6 +45,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = axum::Router::new()
         .route("/ready", get(|| async { "Ready" }))
         .route("/live", get(|| async { "Live" }))
+        .route("/api/encrypt-key", get(routes::encrypt_room_key))
+        .route("/api/decrypt-key", get(routes::decrypt_room_key))
         .with_state(io)
         .layer(
             ServiceBuilder::new()
@@ -39,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Starting server");
 
-    let listener = TcpListener::bind("0.0.0.0:3001").await.unwrap();
+    let listener = TcpListener::bind("[::]:3001").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
