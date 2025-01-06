@@ -20,7 +20,7 @@ interface UsernameModalProps {
     if (!isOpen) return null;
   
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4">
         <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
           <h2 className="text-xl font-bold text-white mb-4">Enter Your Username</h2>
           <form onSubmit={handleSubmit} className="space-y-4">

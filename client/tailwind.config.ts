@@ -11,6 +11,7 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        'deep-blue': '#0A1525',
       },
       animation: {
         bounce: 'bounce 1s infinite'
@@ -20,6 +21,9 @@ export default {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-3px)' }
         }
+      },
+      spacing: {
+        'safe': 'env(safe-area-inset-bottom)',
       }
     },
   },
