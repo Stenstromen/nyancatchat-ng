@@ -2,6 +2,34 @@
 
 ![NyanCatChat-NG](./nyan.gif)
 
+## Table of Contents
+
+- [NyanCatChat-NG](#nyancatchat-ng)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Architecture](#architecture)
+    - [Backend (Rust)](#backend-rust)
+    - [Frontend (Next.js)](#frontend-nextjs)
+  - [Socket.IO Events](#socketio-events)
+    - [Client to Server](#client-to-server)
+    - [Server to Client](#server-to-client)
+  - [Security](#security)
+  - [Development Setup](#development-setup)
+    - [Backend](#backend)
+      - [Run the server](#run-the-server)
+      - [Run the client](#run-the-client)
+  - [Environment Variables](#environment-variables)
+    - [Backend](#backend-1)
+    - [Frontend](#frontend)
+  - [Podman](#podman)
+  - [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Troubleshooting](#troubleshooting)
+    - [Common Issues](#common-issues)
+  - [TODO](#todo)
+
 NyanCatChat-NG is a real-time chat application with end-to-end encryption built using Rust (backend) and Next.js (frontend). Messages are encrypted client-side using AES-256-GCM encryption, ensuring secure communication between users.
 
 ## Features
