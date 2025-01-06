@@ -2,7 +2,7 @@ mod relay;
 mod routes;
 mod state;
 
-use state::{MessageStore, UserStore};
+use state::{MessageStore, NonceStore, UserStore};
 
 use axum::routing::get;
 use relay::i_relay_c;
@@ -34,10 +34,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let messages = MessageStore::default();
     let users = UserStore::default();
+    let nonces = NonceStore::default();
 
     let (layer, io) = SocketIo::builder()
         .with_state(messages)
         .with_state(users)
+        .with_state(nonces)
         .build_layer();
 
     io.ns("/", i_relay_c);

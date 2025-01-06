@@ -1,12 +1,39 @@
 use crate::state::{
-    JoinMessage, LeaveMessage, Message, MessageIn, MessageStore, Messages, TypingSignal, User,
-    UserStore,
+    JoinMessage, LeaveMessage, Message, MessageIn, MessageStore, Messages, NonceStore,
+    TypingSignal, User, UserStore,
 };
 
+use base64;
 use socketioxide::extract::{Data, SocketRef, State};
 use tracing::debug;
 
-pub async fn i_relay_c(socket: SocketRef) {
+pub async fn i_relay_c(socket: SocketRef, nonce_store: State<NonceStore>) {
+    let nonce = nonce_store.add_nonce(socket.id.to_string()).await;
+
+    // Send nonce to client
+    let nonce_b64 = base64::encode(nonce.0);
+    debug!("Generated nonce for {}: {}", socket.id, nonce_b64);
+    let _ = socket.emit("nonce", &nonce_b64);
+
+    socket.on(
+        "verify",
+        |socket: SocketRef, Data(nonce): Data<String>, store: State<NonceStore>| async move {
+            debug!("Received verification attempt from {}", socket.id);
+            let nonce_bytes = base64::decode(nonce).unwrap_or_default();
+            if !store
+                .verify_and_remove(&socket.id.to_string(), &nonce_bytes)
+                .await
+            {
+                debug!("❌ Nonce verification failed for {}", socket.id);
+                let _ = socket.disconnect();
+            } else {
+                debug!("✅ Nonce verified successfully for {}", socket.id);
+            }
+        },
+    );
+
+    debug!("Awaiting nonce verification for {}", socket.id);
+
     debug!("socket connected: {}", socket.id);
 
     socket.on(

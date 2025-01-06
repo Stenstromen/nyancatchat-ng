@@ -6,4 +6,15 @@ const serverUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER || "http://localhost:300
 
 export const socket = io(serverUrl, {
   transports: ["websocket", "polling"],
+  auth: {
+    timestamp: Date.now()
+  }
+});
+
+socket.on("nonce", (nonce: string) => {
+  socket.emit("verify", nonce);
+});
+
+socket.on("connect_error", (error) => {
+  console.error("Connection error:", error);
 });

@@ -1,7 +1,9 @@
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, VecDeque},
     sync::Arc,
+    time::{Duration, Instant},
 };
 use tokio::sync::RwLock;
 
@@ -99,5 +101,41 @@ impl MessageStore {
         if let Some(room_messages) = messages.get_mut(room) {
             room_messages.retain(|msg| msg.user != user);
         }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Nonce(pub [u8; 32]);
+
+impl Nonce {
+    pub fn new() -> Self {
+        let mut bytes = [0u8; 32];
+        rand::thread_rng().fill(&mut bytes);
+        Self(bytes)
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct NonceStore {
+    nonces: Arc<RwLock<HashMap<String, (Nonce, Instant)>>>,
+}
+
+impl NonceStore {
+    pub async fn add_nonce(&self, socket_id: String) -> Nonce {
+        let nonce = Nonce::new();
+        let mut nonces = self.nonces.write().await;
+        nonces.insert(socket_id, (nonce.clone(), Instant::now()));
+        nonce
+    }
+
+    pub async fn verify_and_remove(&self, socket_id: &str, client_nonce: &[u8]) -> bool {
+        let mut nonces = self.nonces.write().await;
+        if let Some((stored_nonce, timestamp)) = nonces.remove(socket_id) {
+            // Verify nonce hasn't expired (5 minutes max)
+            if timestamp.elapsed() <= Duration::from_secs(300) {
+                return stored_nonce.0 == client_nonce;
+            }
+        }
+        false
     }
 }
