@@ -25,7 +25,6 @@
   - [Quick Start](#quick-start)
   - [Prerequisites](#prerequisites)
   - [Contributing](#contributing)
-  - [License](#license)
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
   - [TODO](#todo)
@@ -162,10 +161,6 @@ Visit http://localhost:3000 to start chatting!
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-
-[Add your license here]
-
 ## Troubleshooting
 
 ### Common Issues
@@ -182,5 +177,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## TODO
 
 - [ ] Delete messages on client end on leave
-- [ ] Rich text messages
+- [x] Rich text messages
 - [ ] Image upload
