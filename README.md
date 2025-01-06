@@ -12,6 +12,10 @@ NyanCatChat-NG is a real-time chat application with end-to-end encryption built 
 - Typing indicators
 - Shareable room links
 - Clean and modern UI with dark mode support
+- Message persistence during session
+- User presence indicators
+- Cross-platform compatibility
+- No account required for usage
 
 ## Architecture
 
@@ -57,6 +61,10 @@ NyanCatChat-NG is a real-time chat application with end-to-end encryption built 
 - All messages are encrypted client-side using AES-256-GCM before transmission
 - Encryption keys are generated per room and shared via secure links
 - Messages are stored encrypted in memory and cleaned up when users leave
+- No message persistence between sessions
+- No logging of message content
+- Perfect forward secrecy with unique room keys
+- Optional password protection for rooms
 
 ## Development Setup
 
@@ -92,6 +100,59 @@ npm run dev
 Build and run using Podman:
 
 ```bash
+export SERVER_KEY=$(openssl rand -hex 16)
 podman build -t nyancatchat-ng .
-podman run -p 3001:3001 -e SERVER_KEY=[openssl rand -hex 16] nyancatchat-ng
+podman run -p 3001:3001 -e SERVER_KEY=$SERVER_KEY nyancatchat-ng
 ```
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/nyancatchat-ng
+cd nyancatchat-ng
+
+# Start the backend
+SERVER_KEY=$(openssl rand -hex 16) cargo run
+
+# In a new terminal, start the frontend
+cd client
+npm install
+npm run dev
+```
+
+Visit http://localhost:3000 to start chatting!
+
+## Prerequisites
+
+- Rust 1.70 or higher
+- Node.js 18 or higher
+- npm or yarn
+- OpenSSL for key generation
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+[Add your license here]
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Socket connection fails**
+   - Verify the `NEXT_PUBLIC_SOCKET_SERVER` URL
+   - Check if the backend server is running
+   - Ensure ports are not blocked by firewall
+
+2. **Encryption errors**
+   - Verify room URL is copied completely
+   - Clear browser cache and reload
+
+## TODO
+
+- [ ] Delete messages on client end on leave
+- [ ] Rich text messages
+- [ ] Image upload
