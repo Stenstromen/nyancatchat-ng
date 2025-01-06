@@ -20,11 +20,23 @@ interface TypingSignal {
 }
 
 export default function Chat() {
-  const AVAILABLE_ROOMS = ['KittyRoom', 'NyanRoom', 'DogerRoom', 'PusheenRoom'];
+  const AVAILABLE_ROOMS = ["KittyRoom", "NyanRoom", "DogerRoom", "PusheenRoom"];
   const AVAILABLE_NAMES = [
-    "Pusheen", "Doland", "Gooby", "NyanCat", "Doge",
-    "Stormy", "Pip", "Sunflower", "Biscuit", "Vilde",
-    "Pussel", "Malin", "Laban", "Prinsessan", "Musse"
+    "Pusheen",
+    "Doland",
+    "Gooby",
+    "NyanCat",
+    "Doge",
+    "Stormy",
+    "Pip",
+    "Sunflower",
+    "Biscuit",
+    "Vilde",
+    "Pussel",
+    "Malin",
+    "Laban",
+    "Prinsessan",
+    "Musse",
   ];
   const searchParams = useSearchParams();
   const roomParam = searchParams.get("room");
@@ -32,7 +44,6 @@ export default function Chat() {
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [message, setMessage] = useState("");
   const [room, setRoom] = useState(roomParam || AVAILABLE_ROOMS[0]);
   const [name, setName] = useState("");
   const [joined, setJoined] = useState(false);
@@ -43,6 +54,35 @@ export default function Chat() {
   const pendingRoomRef = useRef<string | null>(null);
   const [shareLink, setShareLink] = useState<string>("");
   const [copyConfirmed, setCopyConfirmed] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [isItalic, setIsItalic] = useState(false);
+  const [isBold, setIsBold] = useState(false);
+  const [isUnderline, setIsUnderline] = useState(false);
+  const [isStrike, setIsStrike] = useState(false);
+
+  const addItalics = () => {
+    document.execCommand('italic', false);
+    setIsItalic(!isItalic);
+    editorRef.current?.focus();
+  };
+
+  const addBold = () => {
+    document.execCommand('bold', false);
+    setIsBold(!isBold);
+    editorRef.current?.focus();
+  };
+
+  const addUnderline = () => {
+    document.execCommand('underline', false);
+    setIsUnderline(!isUnderline);
+    editorRef.current?.focus();
+  };
+
+  const addStrike = () => {
+    document.execCommand('strikeThrough', false);
+    setIsStrike(!isStrike);
+    editorRef.current?.focus();
+  };
 
   useEffect(() => {
     const newSocket = io("http://localhost:3001");
@@ -110,19 +150,27 @@ export default function Chat() {
   }, [messages]);
 
   const generateRoomSuffix = () => {
-    return '-' + Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0');
+    return (
+      "-" +
+      Math.floor(Math.random() * 0xffff)
+        .toString(16)
+        .padStart(4, "0")
+    );
   };
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const baseRoom = room.split('-')[0];
-    
+    const baseRoom = room.split("-")[0];
+
     if (!AVAILABLE_ROOMS.includes(baseRoom)) {
-      setMessages(prev => [...prev, {
-        user: "System",
-        text: "Invalid room. Please select from: kittyroom, nyanroom, dogeroom, or pusheenroom",
-        date: new Date().toISOString()
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          user: "System",
+          text: "Invalid room. Please select from: kittyroom, nyanroom, dogeroom, or pusheenroom",
+          date: new Date().toISOString(),
+        },
+      ]);
       return;
     }
 
@@ -162,25 +210,29 @@ export default function Chat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const encryptedMessage = await encrypt(message);
-    if (socket && message.trim()) {
+    if (!editorRef.current?.textContent?.trim()) return;
+
+    const html = editorRef.current.innerHTML;
+    const encryptedHtml = await encrypt(html);
+
+    if (socket) {
       socket.emit("message", {
-        text: encryptedMessage,
+        text: encryptedHtml,
       });
-      setMessage("");
+      editorRef.current.innerHTML = "";
     }
   };
 
   let typingTimeout: NodeJS.Timeout;
-  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessage(e.target.value);
-
+  const handleTyping = () => {
     if (socket) {
       socket.emit("typing", {
         user: name,
       });
 
-      clearTimeout(typingTimeout);
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
 
       typingTimeout = setTimeout(() => {
         socket.emit("stop_typing", {
@@ -193,7 +245,7 @@ export default function Chat() {
   useEffect(() => {
     if (roomParam && token) {
       pendingRoomRef.current = roomParam;
-      
+
       decryptRoomKey(token)
         .then((key) => {
           window.sessionStorage.setItem("ENCRYPTION_KEY", key);
@@ -206,7 +258,9 @@ export default function Chat() {
     } else {
       const randomIndex = Math.floor(Math.random() * AVAILABLE_ROOMS.length);
       setRoom(AVAILABLE_ROOMS[randomIndex]);
-      const randomNameIndex = Math.floor(Math.random() * AVAILABLE_NAMES.length);
+      const randomNameIndex = Math.floor(
+        Math.random() * AVAILABLE_NAMES.length
+      );
       setName(AVAILABLE_NAMES[randomNameIndex]);
     }
   }, [roomParam, token]);
@@ -235,8 +289,32 @@ export default function Chat() {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+    
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'i':
+          e.preventDefault();
+          addItalics();
+          break;
+        case 'b':
+          e.preventDefault();
+          addBold();
+          break;
+        case 'u':
+          e.preventDefault();
+          addUnderline();
+          break;
+      }
+    }
+  };
+
   return (
-    <div className="w-full h-[100dvh] md:h-[600px] max-w-4xl md:max-w-md mx-auto flex flex-col bg-deep-blue md:my-8 md:rounded-lg md:shadow-xl">
+    <div className="fixed inset-0 md:static md:h-[calc(100vh-80px)] max-w-4xl md:max-w-md md:mx-auto flex flex-col bg-deep-blue h-[100dvh]">
       <UsernameModal
         isOpen={showUsernameModal}
         onSubmit={handleUsernameSubmit}
@@ -246,19 +324,25 @@ export default function Chat() {
         <form onSubmit={handleJoin} className="space-y-4 p-4">
           <div className="space-y-2">
             <div className="relative w-full h-28">
-              <Image src="/nyan.gif" alt="NyanCat" fill className="object-cover" />
+              <Image
+                src="/nyan.gif"
+                alt="NyanCat"
+                fill
+                className="object-cover"
+              />
             </div>
             <label className="block text-white text-lg font-medium mb-2">
               Room
             </label>
             <div className="grid grid-cols-1 gap-4">
-              {AVAILABLE_ROOMS.map(roomOption => (
-                <label 
-                  key={roomOption} 
+              {AVAILABLE_ROOMS.map((roomOption) => (
+                <label
+                  key={roomOption}
                   className={`flex items-center p-3 rounded border cursor-pointer transition-colors
-                    ${room === roomOption 
-                      ? 'bg-indigo-600 border-indigo-500 text-white' 
-                      : 'bg-gray-700 border-gray-600 text-white hover:bg-gray-650'
+                    ${
+                      room === roomOption
+                        ? "bg-indigo-600 border-indigo-500 text-white"
+                        : "bg-gray-700 border-gray-600 text-white hover:bg-gray-650"
                     }`}
                 >
                   <input
@@ -310,7 +394,9 @@ export default function Chat() {
         <div className="flex flex-col h-[100dvh] md:h-full md:w-[1000px] md:-ml-[308px] bg-deep-blue md:rounded-lg overflow-hidden">
           <div className="bg-gray-900 p-4 shadow flex justify-between items-center w-full md:rounded-t-lg">
             <div className="flex items-center gap-4 flex-1">
-              <h2 className="text-base md:text-xl font-bold text-white">#{room}</h2>
+              <h2 className="text-base md:text-xl font-bold text-white">
+                #{room}
+              </h2>
               {shareLink && (
                 <div className="flex items-center gap-2 flex-1">
                   <input
@@ -352,12 +438,13 @@ export default function Chat() {
               <div key={i} className="flex items-start gap-4">
                 {msg.user === "System" ? (
                   <div className="w-10 h-10 rounded-full bg-gray-700 flex-shrink-0 overflow-hidden">
-                    <Image 
-                      src="/nyan.gif" 
-                      alt="System" 
-                      width={40} 
-                      height={40} 
+                    <Image
+                      src="/nyan.gif"
+                      alt="System"
+                      width={40}
+                      height={40}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   </div>
                 ) : (
@@ -374,7 +461,10 @@ export default function Chat() {
                       {new Date(msg.date).toLocaleTimeString()}
                     </span>
                   </div>
-                  <p className="text-gray-100 mt-1">{msg.text}</p>
+                  <p 
+                    className="text-gray-100 mt-1"
+                    dangerouslySetInnerHTML={{ __html: msg.text }}
+                  />
                 </div>
               </div>
             ))}
@@ -395,20 +485,67 @@ export default function Chat() {
                 </span>
               </div>
             )}
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <input
-                type="text"
-                value={message}
-                onChange={handleTyping}
-                placeholder={`Message #${room}`}
-                className="flex-1 p-3 rounded-md bg-gray-700 text-white border-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <button
-                type="submit"
-                className="p-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition"
-              >
-                Send
-              </button>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+              <div className="flex gap-1 bg-gray-800 p-1 rounded-t-md">
+                <button
+                  type="button"
+                  onClick={addBold}
+                  className={`p-2 md:p-1 text-lg md:text-base hover:bg-gray-700 rounded text-white ${
+                    isBold ? 'bg-gray-600' : ''
+                  }`}
+                  title="Bold (Ctrl+B)"
+                >
+                  <strong>B</strong>
+                </button>
+                <button
+                  type="button"
+                  onClick={addItalics}
+                  className={`p-2 md:p-1 text-lg md:text-base hover:bg-gray-700 rounded text-white ${
+                    isItalic ? 'bg-gray-600' : ''
+                  }`}
+                  title="Italic (Ctrl+I)"
+                >
+                  <em>I</em>
+                </button>
+                <button
+                  type="button"
+                  onClick={addUnderline}
+                  className={`p-2 md:p-1 text-lg md:text-base hover:bg-gray-700 rounded text-white ${
+                    isUnderline ? 'bg-gray-600' : ''
+                  }`}
+                  title="Underline (Ctrl+U)"
+                >
+                  <u>U</u>
+                </button>
+                <button
+                  type="button"
+                  onClick={addStrike}
+                  className={`p-2 md:p-1 text-lg md:text-base hover:bg-gray-700 rounded text-white ${
+                    isStrike ? 'bg-gray-600' : ''
+                  }`}
+                  title="Strikethrough"
+                >
+                  <s>S</s>
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  onInput={handleTyping}
+                  onKeyDown={handleKeyPress}
+                  className="flex-1 p-3 rounded-md bg-gray-700 text-white border-none focus:ring-2 focus:ring-indigo-500 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-500"
+                  role="textbox"
+                  data-placeholder="Type your message..."
+                  aria-multiline="true"
+                />
+                <button
+                  type="submit"
+                  className="p-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition"
+                >
+                  Send
+                </button>
+              </div>
             </form>
           </div>
         </div>
