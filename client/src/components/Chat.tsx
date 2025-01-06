@@ -4,10 +4,10 @@
 import { decrypt, encrypt, generateKey } from "@/utils/crypto";
 import { decryptRoomKey, generateShareableLink } from "@/utils/sharing";
 import { useEffect, useState, useRef } from "react";
-import { Socket, io } from "socket.io-client";
 import { useSearchParams } from "next/navigation";
 import UsernameModal from "./UsernameModal";
 import Image from "next/image";
+import { socket } from "@/socket";
 
 interface Message {
   user: string;
@@ -41,8 +41,6 @@ export default function Chat() {
   const searchParams = useSearchParams();
   const roomParam = searchParams.get("room");
   const token = searchParams.get("token");
-
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [room, setRoom] = useState(roomParam || AVAILABLE_ROOMS[0]);
   const [name, setName] = useState("");
@@ -83,15 +81,6 @@ export default function Chat() {
     setIsStrike(!isStrike);
     editorRef.current?.focus();
   };
-
-  useEffect(() => {
-    const newSocket = io("http://localhost:3001");
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.close();
-    };
-  }, []);
 
   useEffect(() => {
     if (!socket) return;
