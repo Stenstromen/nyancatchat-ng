@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
+export const runtime = "edge";
+
 import { decrypt, encrypt, generateKey } from "@/utils/crypto";
 import { decryptRoomKey, generateShareableLink } from "@/utils/sharing";
 import { useEffect, useState, useRef } from "react";
@@ -59,25 +61,25 @@ export default function Chat() {
   const [isStrike, setIsStrike] = useState(false);
 
   const addItalics = () => {
-    document.execCommand('italic', false);
+    document.execCommand("italic", false);
     setIsItalic(!isItalic);
     editorRef.current?.focus();
   };
 
   const addBold = () => {
-    document.execCommand('bold', false);
+    document.execCommand("bold", false);
     setIsBold(!isBold);
     editorRef.current?.focus();
   };
 
   const addUnderline = () => {
-    document.execCommand('underline', false);
+    document.execCommand("underline", false);
     setIsUnderline(!isUnderline);
     editorRef.current?.focus();
   };
 
   const addStrike = () => {
-    document.execCommand('strikeThrough', false);
+    document.execCommand("strikeThrough", false);
     setIsStrike(!isStrike);
     editorRef.current?.focus();
   };
@@ -199,37 +201,21 @@ export default function Chat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editorRef.current?.textContent?.trim()) return;
+    const textArea = editorRef.current as unknown as HTMLTextAreaElement;
+    if (!textArea?.value?.trim()) return;
 
-    const html = editorRef.current.innerHTML;
-    const encryptedHtml = await encrypt(html);
+    const text = textArea.value;
+    const encryptedText = await encrypt(text);
 
     if (socket) {
       socket.emit("message", {
-        text: encryptedHtml,
+        text: encryptedText,
       });
-      editorRef.current.innerHTML = "";
+      textArea.value = "";
     }
   };
 
   let typingTimeout: NodeJS.Timeout;
-  const handleTyping = () => {
-    if (socket) {
-      socket.emit("typing", {
-        user: name,
-      });
-
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-      }
-
-      typingTimeout = setTimeout(() => {
-        socket.emit("stop_typing", {
-          user: name,
-        });
-      }, 2000);
-    }
-  };
 
   useEffect(() => {
     if (roomParam && token) {
@@ -278,23 +264,38 @@ export default function Chat() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (socket) {
+      socket.emit("typing", {
+        user: name,
+      });
+
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+
+      typingTimeout = setTimeout(() => {
+        socket.emit("stop_typing", {
+          user: name,
+        });
+      }, 2000);
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
-    
+
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
-        case 'i':
+        case "i":
           e.preventDefault();
           addItalics();
           break;
-        case 'b':
+        case "b":
           e.preventDefault();
           addBold();
           break;
-        case 'u':
+        case "u":
           e.preventDefault();
           addUnderline();
           break;
@@ -450,7 +451,7 @@ export default function Chat() {
                       {new Date(msg.date).toLocaleTimeString()}
                     </span>
                   </div>
-                  <p 
+                  <p
                     className="text-gray-100 mt-1"
                     dangerouslySetInnerHTML={{ __html: msg.text }}
                   />
@@ -480,7 +481,7 @@ export default function Chat() {
                   type="button"
                   onClick={addBold}
                   className={`p-2 md:p-1 text-lg md:text-base hover:bg-gray-700 rounded text-white ${
-                    isBold ? 'bg-gray-600' : ''
+                    isBold ? "bg-gray-600" : ""
                   }`}
                   title="Bold (Ctrl+B)"
                 >
@@ -490,7 +491,7 @@ export default function Chat() {
                   type="button"
                   onClick={addItalics}
                   className={`p-2 md:p-1 text-lg md:text-base hover:bg-gray-700 rounded text-white ${
-                    isItalic ? 'bg-gray-600' : ''
+                    isItalic ? "bg-gray-600" : ""
                   }`}
                   title="Italic (Ctrl+I)"
                 >
@@ -500,7 +501,7 @@ export default function Chat() {
                   type="button"
                   onClick={addUnderline}
                   className={`p-2 md:p-1 text-lg md:text-base hover:bg-gray-700 rounded text-white ${
-                    isUnderline ? 'bg-gray-600' : ''
+                    isUnderline ? "bg-gray-600" : ""
                   }`}
                   title="Underline (Ctrl+U)"
                 >
@@ -510,7 +511,7 @@ export default function Chat() {
                   type="button"
                   onClick={addStrike}
                   className={`p-2 md:p-1 text-lg md:text-base hover:bg-gray-700 rounded text-white ${
-                    isStrike ? 'bg-gray-600' : ''
+                    isStrike ? "bg-gray-600" : ""
                   }`}
                   title="Strikethrough"
                 >
@@ -518,15 +519,16 @@ export default function Chat() {
                 </button>
               </div>
               <div className="flex gap-2">
-                <div
-                  ref={editorRef}
-                  contentEditable
-                  onInput={handleTyping}
+                <textarea
+                  ref={
+                    editorRef as unknown as React.RefObject<HTMLTextAreaElement>
+                  }
+                  name="message"
                   onKeyDown={handleKeyPress}
-                  className="flex-1 p-3 rounded-md bg-gray-700 text-white border-none focus:ring-2 focus:ring-indigo-500 outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-500"
-                  role="textbox"
-                  data-placeholder="Type your message..."
-                  aria-multiline="true"
+                  className="flex-1 p-3 rounded-md bg-gray-700 text-white border-none focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                  placeholder="Type your message..."
+                  rows={1}
+                  style={{ minHeight: "44px" }}
                 />
                 <button
                   type="submit"

@@ -1,46 +1,60 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
-
-const ALGORITHM = "aes-256-gcm";
-const DEFAULT_KEY = "4b602829cc71fde79ea329ea4f889779d280f3ca592dcc851c6c5ca1c7b2fde5";
-
-function getEncryptionKey(): string {
-  return window.sessionStorage.getItem('ENCRYPTION_KEY') || DEFAULT_KEY;
-}
-
-export function encrypt(plaintext: string): string {
-  const key = getEncryptionKey();
-  const iv = randomBytes(12);
-  const cipher = createCipheriv(ALGORITHM, Buffer.from(key, "hex"), iv);
-
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, "utf8"),
-    cipher.final(),
-  ]);
-
-  const authTag = cipher.getAuthTag();
-
-  return Buffer.concat([iv, encrypted, authTag]).toString("base64");
-}
-
-export function decrypt(encryptedString: string): string {
-  const key = getEncryptionKey();
-  const buf = Buffer.from(encryptedString, "base64");
-
-  const iv = buf.subarray(0, 12);
-  const authTag = buf.subarray(buf.length - 16);
-  const encrypted = buf.subarray(12, buf.length - 16);
-
-  const decipher = createDecipheriv(
-    ALGORITHM,
-    Buffer.from(key, "hex"),
-    iv
-  );
-  decipher.setAuthTag(authTag);
-
-  return decipher.update(encrypted) + decipher.final("utf8");
-}
+const ALGORITHM = { name: "AES-GCM", length: 256 };
+let cachedKey: CryptoKey | null = null;
 
 export function generateKey(): string {
-  const bytes = randomBytes(32);
-  return bytes.toString('hex');
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+async function getKey(keyString?: string): Promise<CryptoKey> {
+  if (cachedKey) return cachedKey;
+  
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(keyString || window.sessionStorage.getItem("ENCRYPTION_KEY") || generateKey());
+  
+  const hash = await crypto.subtle.digest('SHA-256', keyData);
+  
+  cachedKey = await crypto.subtle.importKey(
+    "raw",
+    hash,
+    ALGORITHM,
+    false,
+    ["encrypt", "decrypt"]
+  );
+  
+  return cachedKey;
+}
+
+export async function encrypt(plaintext: string): Promise<string> {
+  const key = await getKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  
+  const encoded = new TextEncoder().encode(plaintext);
+  const ciphertext = await crypto.subtle.encrypt(
+    { ...ALGORITHM, iv },
+    key,
+    encoded
+  );
+  
+  const combined = new Uint8Array([...iv, ...new Uint8Array(ciphertext)]);
+  return btoa(String.fromCharCode(...combined));
+}
+
+export async function decrypt(encryptedString: string): Promise<string> {
+  const key = await getKey();
+  const data = Uint8Array.from(atob(encryptedString), (c) => c.charCodeAt(0));
+  
+  const iv = data.slice(0, 12);
+  const ciphertext = data.slice(12);
+  
+  const decrypted = await crypto.subtle.decrypt(
+    { ...ALGORITHM, iv },
+    key,
+    ciphertext
+  );
+  
+  return new TextDecoder().decode(decrypted);
 }
