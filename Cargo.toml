@@ -9,7 +9,7 @@ repository = "https://github.com/stenstromen/nyancatchat-ng"
 description = "NyanCatChat-NG, a chat application built with Rust and Socket.IO."
 
 [dependencies]
-socketioxide = { version = "0.15.1", features = ["state", "tracing"]}
+socketioxide = { version = "0.16.0", features = ["state", "tracing"]}
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
