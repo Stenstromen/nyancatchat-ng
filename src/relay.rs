@@ -114,7 +114,12 @@ pub async fn i_relay_c(socket: SocketRef, nonce_store: State<NonceStore>) {
 
             store.insert(&room, response.clone()).await;
 
-            match socket.broadcast().within(room).emit("message", &response) {
+            match socket
+                .broadcast()
+                .within(room)
+                .emit("message", &response)
+                .await
+            {
                 Ok(_) => debug!("Message emitted successfully"),
                 Err(e) => debug!("Failed to emit message: {}", e),
             }
