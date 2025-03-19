@@ -8,6 +8,11 @@ updates:
     directory: "/client"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "next"
+        versions: [">=15.2.0"]
+      - dependency-name: "eslint-config-next"
+        versions: [">=15.2.0"]
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
