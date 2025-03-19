@@ -1,4 +1,4 @@
-FROM docker.io/library/rust:1.83-alpine as builder
+FROM docker.io/library/rust:1.85-alpine as builder
 RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconf git libpq-dev
 ENV SYSROOT=/dummy
 ENV LIBPQ_STATIC=1

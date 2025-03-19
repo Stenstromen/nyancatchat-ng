@@ -1,9 +1,9 @@
 [package]
 name = "nyancatchat-ng"
-version = "1.0.0"
+version = "1.0.1-test.1"
 edition = "2021"
 readme = "README.md"
-rust-version = "1.79.0"
+rust-version = "1.85.0"
 homepage = "https://stenstromen.se"
 repository = "https://github.com/stenstromen/nyancatchat-ng"
 description = "NyanCatChat-NG, a chat application built with Rust and Socket.IO."
