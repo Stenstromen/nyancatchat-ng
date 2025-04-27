@@ -5,10 +5,14 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: ":arrow_up: upgrade:"
   - package-ecosystem: "npm"
     directory: "/client"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: ":arrow_up: upgrade:"
     ignore:
       - dependency-name: "next"
         versions: [">=15.2.0"]
@@ -18,3 +22,5 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: ":arrow_up: upgrade:"
