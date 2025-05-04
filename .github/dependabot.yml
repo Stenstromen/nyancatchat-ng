@@ -18,6 +18,8 @@ updates:
         versions: [">=15.2.0"]
       - dependency-name: "eslint-config-next"
         versions: [">=15.2.0"]
+      - dependency-name: "tailwindcss"
+        versions: [">=3.4.1"]
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
