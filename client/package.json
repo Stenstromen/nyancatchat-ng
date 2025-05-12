@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.12",
-    "@cloudflare/workers-types": "^4.20250319.0",
+    "@cloudflare/workers-types": "^4.20250510.0",
     "@eslint/eslintrc": "^3.3.1",
     "@types/node": "^22.13.17",
     "@types/react": "^19.1.0",
